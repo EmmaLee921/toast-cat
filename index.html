@@ -139,6 +139,44 @@
   .lv-stars .ic{width:18px;height:18px;margin:0 1px;}
   .over-stars{display:flex;justify-content:center;align-items:center;}
   .over-stars .ic{width:46px;height:46px;margin:0 5px;}
+
+  /* ===== 一頁滿版覆寫：整體固定一個螢幕高，不捲動 ===== */
+  html,body{height:100%;}
+  body{height:100vh;height:100dvh;min-height:0;overflow:hidden;padding:6px 0 0;}
+  .app{height:100%;display:flex;flex-direction:column;min-height:0;max-width:470px;}
+  .topbar{flex:0 0 auto;margin-bottom:6px;padding:0 8px;}
+  .toast-card{padding:5px 10px;}
+  .t-label{font-size:10px;letter-spacing:1px;}
+  .t-score{font-size:21px;}
+  .t-best{font-size:10px;margin-top:0;}
+  .next-card{flex:0 0 52px;}
+  .next-card canvas{width:36px;height:36px;}
+  .icon-btn{width:34px;padding:4px 0 2px;border-width:2px;}
+  .icon-btn .ic{font-size:15px;}
+  .icon-btn .il{font-size:8px;}
+  .levelbar{flex:0 0 auto;margin:0 10px 6px;gap:6px;}
+  .lv-btn{padding:4px 10px;font-size:12px;}
+  .lv-target{font-size:11px;}
+  .lv-time{font-size:12px;}
+  .lv-meta{font-size:12px;gap:5px;}
+  .lv-stars .ic{width:14px;height:14px;}
+  .use-bomb{font-size:11px;padding:3px 7px;}
+  .stage{flex:1 1 auto;min-height:0;display:flex;justify-content:center;align-items:center;border-radius:0;overflow:visible;}
+  #gameClip{position:relative;overflow:hidden;border-radius:20px;flex:0 0 auto;}
+  #game{display:block;}
+  .bottom{flex:0 0 auto;margin:6px 8px 0;gap:6px;}
+  .panel{padding:5px 6px 4px;border-width:2px;border-radius:14px;}
+  .panel .p-title{font-size:10px;margin:0 3px 3px;}
+  .legitem{width:40px;}
+  .legitem canvas{width:30px;height:30px;}
+  .lglv{font-size:8.5px;}
+  .lgnm{font-size:8px;}
+  .tools{flex:0 0 116px;}
+  .tool{padding:5px 2px 3px;}
+  .tool .tbomb{font-size:17px;}
+  .tool .tname{font-size:8.5px;}
+  .tool .tcount{min-width:16px;height:16px;font-size:9.5px;top:-6px;right:-4px;}
+  .tips{flex:0 0 auto;font-size:10px;padding:4px 8px;margin:5px 8px 2px;}
 </style>
 </head>
 <body>
@@ -169,7 +207,7 @@
     </div>
 
     <div class="stage">
-      <canvas id="game"></canvas>
+      <div id="gameClip"><canvas id="game"></canvas></div>
       <div id="soundHint">🔊 點一下畫面開啟音效</div>
     </div>
 
@@ -216,6 +254,7 @@
       <div id="uploadPanel">
         <p class="upnote">依等級點格子上傳透明背景 PNG，會立即套用；未上傳的等級用內建圖。</p>
         <div id="uploadGrid"></div>
+        <button class="m-item ghost" id="uploadReset" style="margin-top:8px;">↩︎ 還原內建貓圖</button>
       </div>
       <button class="close" id="menuClose">關閉</button>
     </div>
@@ -487,7 +526,7 @@ window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__.ice=["data:image/webp;
   const LEVELS = [
     { lv: 1, timeLimit: 180, obsStart: 20, obsLv: [1, 2], obsBase: 0.06, obsRamp: 0.30, obsMax: 0.30, stars: [3000, 4500, 6000], mech: null },
     { lv: 2, timeLimit: 180, obsStart: 20, obsLv: [1, 3], obsBase: 0.06, obsRamp: 0.30, obsMax: 0.30, stars: [4000, 6000, 8000], mech: 'ice' },
-    { lv: 3, timeLimit: 180, obsStart: 25, obsLv: [1, 3], obsBase: 0.03, obsRamp: 0.16, obsMax: 0.16, stars: [3500, 5500, 8000], mech: 'stone' },
+    { lv: 3, timeLimit: 180, obsStart: 40, obsLv: [1, 3], obsBase: 0.025, obsRamp: 0.12, obsMax: 0.13, stars: [3000, 5000, 7000], mech: 'stone' },
   ];
   let levelIdx = 0;
   const L = () => LEVELS[levelIdx];
@@ -958,7 +997,22 @@ window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__.ice=["data:image/webp;
     ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(cxc, cyc, r + 9, -Math.PI / 2, -Math.PI / 2 + frac * 6.2832); ctx.stroke();
     ctx.restore();
   }
+  function drawIceFrost(now) {
+    for (const b of cats) {
+      if (!b.isIce) continue;
+      const r = b.circleRadius, x = b.position.x, y = b.position.y;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(x, y, r * 0.25, x, y, r * 1.02);
+      g.addColorStop(0, 'rgba(150,220,255,0)'); g.addColorStop(0.7, 'rgba(150,220,255,0.05)'); g.addColorStop(1, 'rgba(140,215,255,0.34)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 1.02, 0, 6.2832); ctx.fill();
+      ctx.restore();
+      ctx.save(); ctx.fillStyle = 'rgba(225,245,255,0.95)';
+      for (let k = 0; k < 2; k++) { const a = now / 750 + k * 3.14159 + (b.id || 0); const sx = x + Math.cos(a) * r * 0.62, sy = y + Math.sin(a) * r * 0.62; ctx.beginPath(); ctx.arc(sx, sy, r * 0.07, 0, 6.2832); ctx.fill(); }
+      ctx.restore();
+    }
+  }
   function drawBombHints(now) {
+    drawIceFrost(now);
     for (const b of cats) {
       const r = b.circleRadius;
       if (b.isObstacle || b.level < 5) continue;
@@ -1118,6 +1172,25 @@ window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__.ice=["data:image/webp;
   overRevive.addEventListener('click', () => { if (!reviveUsed) revive(); });
   overShop.addEventListener('click', () => { clearTimeout(advanceTimer); shopPanel.classList.add('open'); updateMetaUI(); });
 
+  // ---------- 自訂貓圖：縮圖、圓角裁切、記憶 ----------
+  function applyCustomCat(i, dataUrl, save) {
+    const im = new Image();
+    im.onload = () => {
+      const S = 256, oc = document.createElement('canvas'); oc.width = S; oc.height = S;
+      const c = oc.getContext('2d'); const rr = S * 0.22;
+      c.beginPath(); c.moveTo(rr, 0); c.arcTo(S, 0, S, S, rr); c.arcTo(S, S, 0, S, rr); c.arcTo(0, S, 0, 0, rr); c.arcTo(0, 0, S, 0, rr); c.closePath(); c.clip();
+      const k = Math.max(S / im.width, S / im.height);
+      c.drawImage(im, (S - im.width * k) / 2, (S - im.height * k) / 2, im.width * k, im.height * k);
+      let out = oc.toDataURL('image/webp', 0.82);
+      if (out.indexOf('data:image/webp') !== 0) out = oc.toDataURL('image/jpeg', 0.82);
+      loadImage(i, out);
+      if (save) { const arr = lsGet('twc_cats', [null,null,null,null,null,null,null]) || []; arr[i] = out; lsSet('twc_cats', arr); }
+    };
+    im.src = dataUrl;
+  }
+  function restoreCustomCats() { (lsGet('twc_cats', []) || []).forEach((d, i) => { if (d) applyCustomCat(i, d, false); }); }
+  function resetCustomCats() { lsSet('twc_cats', []); (ASSETS.cats || []).forEach((d, i) => loadInto(catImages, i, d)); catImages[6] = catImages[6] || catImages[5]; setTimeout(refreshIcons, 150); }
+
   // ---------- 上傳 / 等級表 ----------
   const slotCtx = [], legendCtx = [];
   function buildUI() {
@@ -1125,7 +1198,7 @@ window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__.ice=["data:image/webp;
       const slot = document.createElement('label'); slot.className = 'slot';
       const cv = document.createElement('canvas'); cv.width = 48 * dpr; cv.height = 48 * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr); slotCtx.push(c);
       const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.hidden = true;
-      inp.addEventListener('change', ev => { const f = ev.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => loadImage(i, rd.result); rd.readAsDataURL(f); });
+      inp.addEventListener('change', ev => { const f = ev.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => applyCustomCat(i, rd.result, true); rd.readAsDataURL(f); });
       const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = 'Lv' + (i + 1) + ' ' + CATS[i].name;
       slot.append(cv, cap, inp); uploadGrid.appendChild(slot);
 
@@ -1148,13 +1221,43 @@ window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__.ice=["data:image/webp;
   }
   uploadToggle.addEventListener('click', () => { Sound.unlock(); const open = uploadPanel.classList.toggle('open'); uploadToggle.textContent = open ? '收起圖片設定 ▲' : '🍞 換我的貓圖'; });
 
+  document.getElementById('uploadReset').addEventListener('click', () => { Sound.unlock(); resetCustomCats(); });
+
   // ---------- 啟動 ----------
   buildUI();
+  restoreCustomCats();
   setItemIcons(); updateToolUI(); updateMetaUI(); updateLevelUI();
   next = genPiece(); spawnPending();
   requestAnimationFrame(frame);
 })();
 
+</script>
+<script>
+(function(){
+  var cv = document.getElementById('game');
+  var clip = document.getElementById('gameClip');
+  var st = clip && clip.parentElement;
+  if(!cv || !clip || !st) return;
+  var W = 384, H = 688, CROP = 110;        // 頂部固定裁切（純背景）
+  var SIDE_MAX = 17, BOT_MAX = 105;        // 左右／底部桌面最多可再裁的世界像素
+  function fit(){
+    var aw = st.clientWidth, ah = st.clientHeight;
+    if(!aw || !ah) return;
+    var s = Math.max(aw / W, ah / (H - CROP)) * 1.06;   // cover 填滿並再放大一點
+    var sUp = Math.min(aw / (W - 2 * SIDE_MAX), ah / (H - CROP - BOT_MAX));
+    if (s > sUp) s = sUp;                               // 裁切不超過安全上限
+    var vw = Math.min(aw, W * s), vh = Math.min(ah, (H - CROP) * s);
+    clip.style.width = vw + 'px';
+    clip.style.height = vh + 'px';
+    cv.style.width = (W * s) + 'px';
+    cv.style.height = (H * s) + 'px';
+    cv.style.marginTop = (-CROP * s) + 'px';
+    cv.style.marginLeft = (-(W * s - vw) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', function(){ setTimeout(fit, 120); });
+  fit(); setTimeout(fit, 60); setTimeout(fit, 300);
+})();
 </script>
 </body>
 </html>
