@@ -287,12 +287,22 @@
       <p>獲得 <b id="overGain">0</b> <i class="ic ic-star"></i></p>
       <button class="m-item" id="overNext" style="display:none;">下一關 ▶</button>
       <button class="m-item" id="overRestart">🔄 重新開始</button>
-      <button class="m-item ghost" id="overRevive">▶ 看影片復活（限一次）</button>
+      <button class="m-item ghost" id="overRevive">📸 追蹤 IG 復活（限一次）</button>
       <button class="m-item ghost" id="overShop">🏪 關卡 / 商店</button>
     </div>
   </div>
 
   <!-- 模擬廣告 -->
+  <div class="overlay" id="igPanel">
+    <div class="sheet">
+      <h3>追蹤就能復活 🐱</h3>
+      <p style="font-size:13px;color:#8a6a44;line-height:1.7;">追蹤大叔貓的 IG,就送你一次復活機會!<br>點下方按鈕前往追蹤,回來後即可復活。</p>
+      <button class="m-item" id="igGo">📸 前往追蹤 @catbobo520</button>
+      <button class="m-item ghost off" id="igDone" disabled>✅ 我追蹤好了,復活!</button>
+      <button class="close" id="igCancel">取消</button>
+    </div>
+  </div>
+
   <div id="adOverlay">
     <div class="ad-box">
       <div class="ad-t">廣告模擬中…</div>
@@ -764,9 +774,20 @@ window.__ASSETS__=window.__ASSETS__||{};window.__ASSETS__.ice=["data:image/webp;
     adOverlay.classList.add('show'); let n = 3; adCount.textContent = n;
     const iv = setInterval(() => { n--; if (n <= 0) { clearInterval(iv); adOverlay.classList.remove('show'); cb && cb(); } else adCount.textContent = n; }, 1000);
   }
+  const IG_URL = 'https://www.instagram.com/catbobo520?utm_source=game';
+  const igPanel = document.getElementById('igPanel'), igGo = document.getElementById('igGo'), igDone = document.getElementById('igDone'), igCancel = document.getElementById('igCancel');
+  igGo.addEventListener('click', () => { Sound.unlock(); window.open(IG_URL, '_blank'); igDone.disabled = false; igDone.classList.remove('off'); lsSet('twc_ig', 1); });
+  igCancel.addEventListener('click', () => { igPanel.classList.remove('open'); });
+  igDone.addEventListener('click', () => { if (igDone.disabled) return; igPanel.classList.remove('open'); doRevive(); });
   function revive() {
+    if (reviveUsed) return;
+    if (lsGet('twc_ig', 0)) { doRevive(); return; }      // 追蹤過就直接復活
+    igDone.disabled = true; igDone.classList.add('off');
+    igPanel.classList.add('open');
+  }
+  function doRevive() {
     if (reviveUsed) return; reviveUsed = true; overRevive.classList.add('off');
-    playMockAd(() => {
+    (function (cb) { cb(); })(() => {
       const arr = cats.slice().sort((p, q) => Math.abs(p.position.x - W / 2) - Math.abs(q.position.x - W / 2));
       const n = Math.floor(arr.length * 0.5);
       for (let i = 0; i < n; i++) { const c = arr[i]; burst(c.position.x, c.position.y, 4, true); removeCat(c); }
